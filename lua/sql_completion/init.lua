@@ -102,6 +102,7 @@ function M.auto_complete()
 
     -- Determine the appropriate completion context
     local context, prefix = detect_context(current_line, col)
+    prefix = prefix and prefix:gsub("'", "''") -- Double single quotes in prefix
     debug("Detected context:", context and context.name, "with prefix:", prefix)
 
     if context and prefix and #prefix >= M.config.min_chars then
