@@ -14,14 +14,14 @@ M.config = {
             kind = "󰆼 Link",
             sql_cmd = "SELECT path FROM files WHERE path LIKE '%%%s%%' LIMIT 10;"
         },
-        tag = {
-            name = "Tag",
-            trigger = "#",
-            match = "#(.*)$",
-            stop_trigger = " ",
-            kind = " Tag",
-            sql_cmd = "SELECT tag FROM tags WHERE tag LIKE '%%%s%%' LIMIT 10;"
-        }
+	tag = {
+	    name = "Tag",
+	    trigger = "#",
+	    match = "#([^%s]*)$",
+	    stop_trigger = " ",
+	    kind = " Tag",
+	    sql_cmd = "SELECT tag FROM tags WHERE tag LIKE '%%%s%%' LIMIT 10;"
+	}
     }
 }
 
@@ -129,8 +129,19 @@ function M.accept_completion()
         local info = vim.fn.complete_info()
         -- Only add stop_trigger if an item is selected
         if info.selected ~= -1 then
-            local context = detect_context(vim.api.nvim_get_current_line(), vim.api.nvim_win_get_cursor(0)[2])
-            return context and context.stop_trigger or ""
+            local cursor = vim.api.nvim_win_get_cursor(0)
+            local col = cursor[2]
+            local current_line = vim.api.nvim_get_current_line()
+            local context = detect_context(current_line, col)
+            if context then
+                debug("Accepting completion with context:", context.name, "stop_trigger:", context.stop_trigger)
+                -- Close the popup menu and insert the stop_trigger
+                vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-y>", true, false, true), "n", false)
+                vim.schedule(function()
+                    vim.api.nvim_feedkeys(context.stop_trigger, "n", false)
+                end)
+                return ""
+            end
         end
     end
     return "\n" -- Normal Enter behavior if no completion
